@@ -23,8 +23,7 @@ class SeqSS:
     def __str__(self):
         """Output seqSS when 'print' method is called."""
         return "%s\tNo:%s\tlength:%s\tMFE:%.2f\n%s\n%s" % (self.name, str(self.no), str(self.length), self.MFE, self.sequence, self.sstruc)
-        
-        
+
 def get_rnasc_data(input_data):
     """Get rnasc data from file or list with check.
 

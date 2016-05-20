@@ -33,7 +33,6 @@ def get_kmer_lst(letter, k):
     kmerlst = np.sort(kmerlst)
     return list(kmerlst)
 
-
 def delete_free_base(sequence, sstructure):
     """Delete free base based on secondary structure to produce a new sequence and secondary structure. New sequence and secondary structure is a substring of the original sequence and secondary structure.
     :param sequence: an RNA sequence.

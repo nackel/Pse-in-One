@@ -6,13 +6,14 @@ Created on Sat May 13 15:35:42 2016
 """
 
 import re
-import time
 from itertools import combinations_with_replacement, permutations, product
+
 import numpy as np
+
 from data import index_list
 from util_sc import get_rnasc_data
 
-    
+
 def get_kmer_lst(letter, k):
     """Generate a list of all possible k-mer pattern.
     
@@ -32,6 +33,7 @@ def get_kmer_lst(letter, k):
         kmerlst += strlst
     kmerlst = np.sort(kmerlst)
     return list(kmerlst)
+
 
 def delete_free_base(sequence, sstructure):
     """Delete free base based on secondary structure to produce a new sequence and secondary structure. New sequence and secondary structure is a substring of the original sequence and secondary structure.

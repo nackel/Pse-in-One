@@ -5,10 +5,12 @@ Created on Fri May 20 10:05:20 2016
 @author: Nackel
 """
 
-import sys
 import re
+import sys
+
 from data import index_list
 from util import is_under_alphabet
+
 
 class SeqSS:
     """An object that contains RNA sequence and its secondary structure"""
@@ -23,6 +25,7 @@ class SeqSS:
     def __str__(self):
         """Output seqSS when 'print' method is called."""
         return "%s\tNo:%s\tlength:%s\tMFE:%.2f\n%s\n%s" % (self.name, str(self.no), str(self.length), self.MFE, self.sequence, self.sstruc)
+
 
 def get_rnasc_data(input_data):
     """Get rnasc data from file or list with check.

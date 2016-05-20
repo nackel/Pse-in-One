@@ -7,12 +7,12 @@ Created on Sat May 13 15:35:42 2016
 
 import re
 from itertools import combinations_with_replacement, permutations, product
-
+import sys
 import numpy as np
 
 from data import index_list
 from util_sc import get_rnasc_data
-
+from util_sc import is_rnasc_list
 
 def get_kmer_lst(letter, k):
     """Generate a list of all possible k-mer pattern.
@@ -124,7 +124,7 @@ def get_triplet_vector(sequence, sstructure,patterndict):
         vector[0, position] += 1
         #print letter_sstruc_comb ,position
     #return list (vector[0])
-    return list(vector[0]/sum(vector[0]))    
+    return [round(f, 8) for f in list(vector[0] / sum(vector[0]))]
      
      
 def get_triplet_dict(letter, k, alphabet=index_list.RNA):
@@ -140,6 +140,25 @@ def get_triplet_dict(letter, k, alphabet=index_list.RNA):
     #tripletlst = np.sort(tripletlst)
     tripletdict = {tripletlst[i]: i for i in range(len(tripletlst))}
     return tripletdict
+#================================PseSSC========================================
+
+def comb_sequence_sstructure(sequence,sstructure):
+    sstructure_lst = list(sstructure)
+    if len(sequence)==len(sstructure):
+        s= []
+        for i in range(len(sequence)):
+            if sstructure[i] == "(":
+                s.append(i)
+            if sstructure[i] ==")":
+                pos = s.pop()
+                sstructure_lst[pos] = sequence[i]
+                sstructure_lst[i] = sequence[pos]
+        sstructure_new = ''.join(sstructure_lst)
+        return sstructure_new
+    else:
+        error_info = 'The length of sequence is not equal to the length of its secondary structure'
+        sys.stderr.write(error_info)
+
 #==============================================================================
 
  
@@ -204,13 +223,13 @@ if __name__ == '__main__':
 #==============================================================================
 
 #==========================Triplet test========================================
-#    letter = ['(', '.']
-#    alphabet ="AGCU"
-#    sequence = 'CUUUCUACACAGGUUGGGAUCGGUUGCAAUGCUGUGUUUCUGUAUGGUAUUGCACUUGUCCCGGCCUGUUGAGUUUGG'
-#    sstructure="..(((...((((((((((((.(((.(((((((((((......)))))))))))))).)))))))))))).)))....."
-#    patterndic= get_triplet_dict(letter, 3, alphabet)
-#    vector =get_triplet_vector(sequence, sstructure, patterndic)
-#    lst=[">hsa-let-7c MI0000064", 'CUUUCUACACAGGUUGGGAUCGGUUGCAAUGCUGUGUUUCUGUAUGGUAUUGCACUUGUCCCGGCCUGUUGAGUUUGG', '..(((...((((((((((((.(((.(((((((((((......)))))))))))))).)))))))))))).))).....']
-#    is_rnasc_list(lst)
+    letter = ['(', '.']
+    alphabet ="AGCU"
+    sequence = 'CUUUCUACACAGGUUGGGAUCGGUUGCAAUGCUGUGUUUCUGUAUGGUAUUGCACUUGUCCCGGCCUGUUGAGUUUGG'
+    sstructure="..(((...((((((((((((.(((.(((((((((((......)))))))))))))).)))))))))))).)))....."
+    patterndic= get_triplet_dict(letter, 3, alphabet)
+    vector =get_triplet_vector(sequence, sstructure, patterndic)
+    lst=[">hsa-let-7c MI0000064", 'CUUUCUACACAGGUUGGGAUCGGUUGCAAUGCUGUGUUUCUGUAUGGUAUUGCACUUGUCCCGGCCUGUUGAGUUUGG', '..(((...((((((((((((.(((.(((((((((((......)))))))))))))).)))))))))))).))).....']
+    is_rnasc_list(lst)
 # =============================================================================
-    list_pattern = ['A', 'C', 'G', 'U', 'A-U', 'U-A', 'G-C', 'C-G', 'G-U', 'U-G']
+#    list_pattern = ['A', 'C', 'G', 'U', 'A-U', 'U-A', 'G-C', 'C-G', 'G-U', 'U-G']

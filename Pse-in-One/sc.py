@@ -1,19 +1,20 @@
 # -*- coding: utf-8 -*-
 """
 Created on Sat May 13 15:35:42 2016
-@version:0.1.2
+@version:0.1.3
 @author: Nackel
 """
-
-import re
-from itertools import combinations_with_replacement, permutations, product
 import sys
+import re
+import time
+from itertools import combinations_with_replacement, permutations, product
 import numpy as np
-
 from data import index_list
-from util_sc import get_rnasc_data
 from util_sc import is_rnasc_list
-
+from util_sc import get_rnasc_data
+from util_sc import get_corresp_sequence
+import os
+    
 def get_kmer_lst(letter, k):
     """Generate a list of all possible k-mer pattern.
     
@@ -95,8 +96,7 @@ def get_triplet_vector(sequence, sstructure,patterndict):
     :param patterndict: All the features, dictionary.
     :return: Feature vector through Triplet.
     '''
-    elelen = len(patterndict)
-    vector=np.zeros((1,elelen))
+    vector = np.zeros((1, len(patterndict)))
     sequence, sstructure = delete_free_base(sequence, sstructure)
     sequence, sstructure = delete_loop(sequence, sstructure)
     
@@ -120,11 +120,11 @@ def get_triplet_vector(sequence, sstructure,patterndict):
              
         letter_sstruc_comb = letter+near_left+middle+near_right
         letter_sstruc_comb_r = letter_sstruc_comb.replace(')', '(')
-        position=patterndict.get(letter_sstruc_comb_r)
+        position = patterndict.get(letter_sstruc_comb_r)
         vector[0, position] += 1
         #print letter_sstruc_comb ,position
     #return list (vector[0])
-    return [round(f, 8) for f in list(vector[0] / sum(vector[0]))]
+    return [round(f, 3) for f in list(vector[0] / sum(vector[0]))]
      
      
 def get_triplet_dict(letter, k, alphabet=index_list.RNA):
@@ -140,28 +140,111 @@ def get_triplet_dict(letter, k, alphabet=index_list.RNA):
     #tripletlst = np.sort(tripletlst)
     tripletdict = {tripletlst[i]: i for i in range(len(tripletlst))}
     return tripletdict
-#================================PseSSC========================================
 
-def comb_sequence_sstructure(sequence,sstructure):
-    sstructure_lst = list(sstructure)
-    if len(sequence)==len(sstructure):
-        s= []
-        for i in range(len(sequence)):
-            if sstructure[i] == "(":
-                s.append(i)
-            if sstructure[i] ==")":
-                pos = s.pop()
-                sstructure_lst[pos] = sequence[i]
-                sstructure_lst[i] = sequence[pos]
-        sstructure_new = ''.join(sstructure_lst)
-        return sstructure_new
+
+# =========================PseKNC===============================================
+def get_pseknc_matrix(filename, k):
+    '''This is a complete process in triplet,aim to gernerate feature vectors.
+     
+       The FASTA format of the input file is as follows:    
+       >sequence name
+       An RNA sequence should be consist of AGCU
+       Second structure
+ 
+    :param input_file_name: f: HANDLE to input. open(<file>)
+    :return: Feature matrix through Triplet
+    '''
+
+    alphabet = 'ACGU'
+    letter = list(alphabet)
+    with open(filename) as f:
+        seqsslst = get_rnasc_data(f)
+    psekncdict = get_pseknc_dict(letter, k)
+    features = []
+    for seqss in seqsslst:
+        vector = get_pseknc_vector(seqss.sequence, seqss.sstruc, psekncdict, k)
+        features.append(vector)
+    return features
+
+
+def get_pseknc_dict(letter, k):
+    """Generate a dictionary of all possible PseKNC pattern.
+    :param letter: a list that contains all the possible characters in an RNA sequence. eg:['A','C','G','U']
+    :param k: the length of K-tuple nucleotide composition.
+    :return: a PseKNC pattern dictionary.
+    """
+    pseknclst = []
+    part_psessc = list(combinations_with_replacement(letter, k))
+    for element in part_psessc:
+        elelst = set(permutations(element, k))
+        pseknclst += elelst
+    pseknclst.sort()
+    psekncdict = {pseknclst[i]:i for i in range(len(pseknclst))}
+    return psekncdict
+
+
+def get_pseknc_vector(sequence, sstructure, psekncdict, k):
+    vector = np.zeros((1, len(psekncdict)))
+    correspseq = get_corresp_sequence(sequence, sstructure)
+    pattern = zip(list(sequence), list(correspseq))
+
+    for i in xrange(len(pattern) - k + 1):
+        stem = []
+        for x, y in pattern[i:i + k]:
+            if x == '.' or y == '.':
+                if x == '.':
+                    stem.append(y)
+                else:
+                    stem.append(x)
+            else:
+                stem.append(x + '-' + y)
+        stem_tuple = tuple(stem)
+        position = psekncdict.get(stem_tuple)
+        vector[0, position] += 1
+        # print stem_tuple
+    return list(vector[0] / sum(vector[0]))
+    # return [round(f,4) for f in list(vector[0]/sum(vector[0]))]
+
+
+def calculate_psessc_theta(sequence, sstructure, j):
+    '''r represents λ'''
+    if j < len(sequence):
+        correspseq = get_corresp_sequence(sequence, sstructure)
+        pattern = zip(list(sequence), list(correspseq))
+        stem = []
+        for x, y in pattern:
+            if x == '.' or y == '.':
+                if x == '.':
+                    stem.append(y)
+                else:
+                    stem.append(x)
+            else:
+                stem.append(x + '-' + y)
+        freevalue_vector = []
+        for i in stem:
+            if i == 'A-U' or i == 'U-A':
+                freevalue_vector.append(-2)
+            elif i == 'C-G' or i == 'G-C':
+                freevalue_vector.append(-3)
+            elif i == 'U-G' or i == 'G-U':
+                freevalue_vector.append(-1)
+            else:
+                freevalue_vector.append(0)
+
+        s = 0.0
+        for i in range(len(freevalue_vector) - j):
+            s += (freevalue_vector[i] - freevalue_vector[i + j]) ** 2
+            print i, i + j
+            # print (freevalue_vector[i] - freevalue_vector[i+r])
+        # print s,len(freevalue_vector)-r
+        return s / (len(freevalue_vector) - j)
     else:
-        error_info = 'The length of sequence is not equal to the length of its secondary structure'
+        error_info = 'r should be less than the length of the sequence.'
         sys.stderr.write(error_info)
 
-#==============================================================================
+    # def get_psessc_vector(sequence, sstructure, k, r):
 
- 
+
 def main(args):
     if args.method == "triplet":
         res = get_triplet_matrix(args.inputfile)
@@ -178,8 +261,8 @@ def main(args):
         write_libsvm(res, [args.l] * len(res), args.outputfile)
     elif args.f == 'csv':
         from util import write_csv
-        write_csv(res, args.outputfile)   
-    
+        write_csv(res, args.outputfile)
+
 
 if __name__ == '__main__':
 #==============================================================================
@@ -223,13 +306,41 @@ if __name__ == '__main__':
 #==============================================================================
 
 #==========================Triplet test========================================
-    letter = ['(', '.']
-    alphabet ="AGCU"
-    sequence = 'CUUUCUACACAGGUUGGGAUCGGUUGCAAUGCUGUGUUUCUGUAUGGUAUUGCACUUGUCCCGGCCUGUUGAGUUUGG'
-    sstructure="..(((...((((((((((((.(((.(((((((((((......)))))))))))))).)))))))))))).)))....."
-    patterndic= get_triplet_dict(letter, 3, alphabet)
-    vector =get_triplet_vector(sequence, sstructure, patterndic)
-    lst=[">hsa-let-7c MI0000064", 'CUUUCUACACAGGUUGGGAUCGGUUGCAAUGCUGUGUUUCUGUAUGGUAUUGCACUUGUCCCGGCCUGUUGAGUUUGG', '..(((...((((((((((((.(((.(((((((((((......)))))))))))))).)))))))))))).))).....']
-    is_rnasc_list(lst)
-# =============================================================================
-#    list_pattern = ['A', 'C', 'G', 'U', 'A-U', 'U-A', 'G-C', 'C-G', 'G-U', 'U-G']
+#    letter = ['(', '.']
+#    alphabet ="AGCU"
+#    sequence = 'CUUUCUACACAGGUUGGGAUCGGUUGCAAUGCUGUGUUUCUGUAUGGUAUUGCACUUGUCCCGGCCUGUUGAGUUUGG'
+#    sstructure="..(((...((((((((((((.(((.(((((((((((......)))))))))))))).)))))))))))).)))....."
+#    patterndic= get_triplet_dict(letter, 3, alphabet)
+#    vector =get_triplet_vector(sequence, sstructure, patterndic)
+#    lst=[">hsa-let-7c MI0000064", 'CUUUCUACACAGGUUGGGAUCGGUUGCAAUGCUGUGUUUCUGUAUGGUAUUGCACUUGUCCCGGCCUGUUGAGUUUGG', '..(((...((((((((((((.(((.(((((((((((......)))))))))))))).)))))))))))).))).....']
+#    is_rnasc_list(lst)
+# ==============================================================================
+
+# ==============================================================================
+    list_pattern = ['A', 'C', 'G', 'U', 'A-U', 'U-A', 'G-C', 'C-G', 'G-U', 'U-G']
+    list_rna = ['A', 'C', 'G', 'U']
+    sequence = "GCAUCCGGGUUGAGGUAGUAGGUUGUAUGGUUUAGAGUUACACCCUGGGAGUUAACUGUACAACCUUCUAGCUUUCCUUGGAGC"
+    sstructure = '((.((((((..(((.(((.(((((((((((((..((.(..((...))..).))))))))))))))).))).)))..))))))))'
+    #    sequence_t ='UGGGGUUUCAGGUUCUCAGUCAGAACCUUGGCCCCU'
+    #    sstructure_t = '.((((((..(((((((.....))))))).)))))).'
+
+    k = 2
+    r = 3
+    w = 0
+    pseknclst = []
+    part_psessc = list(combinations_with_replacement(list_pattern, k))
+    #    for i in pseknclst:
+    #        print list(i)
+    #        #i = list(i)
+    #        print i
+    psekncdict = get_pseknc_dict(list_pattern, k)
+    vector_pseknc = get_pseknc_vector(sequence, sstructure, psekncdict, k)
+    # theta = calculate_psessc_theta(sequence, sstructure,3)
+
+
+
+    # get_psessc_vector
+    psessc_vector = vector_pseknc
+    for i in range(1, r + 1):
+        psessc_vector.append(w * calculate_psessc_theta(sequence, sstructure, i))
+    psessc_vector_t = psessc_vector / sum(psessc_vector)

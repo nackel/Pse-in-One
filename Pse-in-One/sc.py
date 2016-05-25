@@ -124,7 +124,7 @@ def get_triplet_vector(sequence, sstructure,patterndict):
         vector[0, position] += 1
         #print letter_sstruc_comb ,position
     #return list (vector[0])
-    return [round(f, 3) for f in list(vector[0] / sum(vector[0]))]
+    return [round(f, 8) for f in list(vector[0] / sum(vector[0]))]
      
      
 def get_triplet_dict(letter, k, alphabet=index_list.RNA):
@@ -239,7 +239,7 @@ def calculate_psessc_theta(sequence, sstructure, j):
         # print s,len(freevalue_vector)-r
         return s / (len(freevalue_vector) - j)
     else:
-        error_info = 'r should be less than the length of the sequence.'
+        error_info = 'j should be less than the length of the sequence.'
         sys.stderr.write(error_info)
 
     # def get_psessc_vector(sequence, sstructure, k, r):

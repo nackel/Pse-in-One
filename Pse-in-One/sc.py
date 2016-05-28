@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Sat May 13 15:35:42 2016
-@version:0.2.1
+@version:0.2.2
 @author: Nackel
 """
 import sys

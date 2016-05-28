@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Sat May 13 15:35:42 2016
-@version:0.1.3
+@version:0.2.1
 @author: Nackel
 """
 import sys
@@ -96,7 +96,7 @@ def get_triplet_vector(sequence, sstructure,patterndict):
     :param patterndict: All the features, dictionary.
     :return: Feature vector through Triplet.
     '''
-    vector = np.zeros((1, len(patterndict)))
+    vector=np.zeros((1,len(patterndict)))
     sequence, sstructure = delete_free_base(sequence, sstructure)
     sequence, sstructure = delete_loop(sequence, sstructure)
     
@@ -124,7 +124,7 @@ def get_triplet_vector(sequence, sstructure,patterndict):
         vector[0, position] += 1
         #print letter_sstruc_comb ,position
     #return list (vector[0])
-    return [round(f, 8) for f in list(vector[0] / sum(vector[0]))]
+    return [round(f,8) for f in list(vector[0]/sum(vector[0]))]
      
      
 def get_triplet_dict(letter, k, alphabet=index_list.RNA):
@@ -140,11 +140,9 @@ def get_triplet_dict(letter, k, alphabet=index_list.RNA):
     #tripletlst = np.sort(tripletlst)
     tripletdict = {tripletlst[i]: i for i in range(len(tripletlst))}
     return tripletdict
-
-
-# =========================PseKNC===============================================
-def get_pseknc_matrix(filename, k):
-    '''This is a complete process in triplet,aim to gernerate feature vectors.
+#=========================PseKNC===============================================
+def get_pseknc_matrix(filename,k):
+    '''This is a complete process in PseKNC,aim to gernerate feature vectors.
      
        The FASTA format of the input file is as follows:    
        >sequence name
@@ -154,18 +152,17 @@ def get_pseknc_matrix(filename, k):
     :param input_file_name: f: HANDLE to input. open(<file>)
     :return: Feature matrix through Triplet
     '''
-
+    
     alphabet = 'ACGU'
     letter = list(alphabet)
     with open(filename) as f:
-        seqsslst = get_rnasc_data(f)
+        seqsslst= get_rnasc_data(f)
     psekncdict = get_pseknc_dict(letter, k)
     features = []
     for seqss in seqsslst:
-        vector = get_pseknc_vector(seqss.sequence, seqss.sstruc, psekncdict, k)
+        vector = get_pseknc_vector(seqss.sequence,seqss.sstruc,psekncdict, k)
         features.append(vector)
     return features
-
 
 def get_pseknc_dict(letter, k):
     """Generate a dictionary of all possible PseKNC pattern.
@@ -174,23 +171,23 @@ def get_pseknc_dict(letter, k):
     :return: a PseKNC pattern dictionary.
     """
     pseknclst = []
-    part_psessc = list(combinations_with_replacement(letter, k))
+    part_psessc=list(combinations_with_replacement(letter, k))
     for element in part_psessc:
-        elelst = set(permutations(element, k))
-        pseknclst += elelst
+        elelst=set(permutations(element, k))
+        pseknclst +=elelst
     pseknclst.sort()
     psekncdict = {pseknclst[i]:i for i in range(len(pseknclst))}
     return psekncdict
 
 
 def get_pseknc_vector(sequence, sstructure, psekncdict, k):
-    vector = np.zeros((1, len(psekncdict)))
-    correspseq = get_corresp_sequence(sequence, sstructure)
-    pattern = zip(list(sequence), list(correspseq))
-
-    for i in xrange(len(pattern) - k + 1):
-        stem = []
-        for x, y in pattern[i:i + k]:
+    vector=np.zeros((1,len(psekncdict)))
+    correspseq = get_corresp_sequence(sequence,sstructure)
+    pattern = zip(list(sequence),list(correspseq))
+    
+    for i in xrange(len(pattern)-k+1):
+        stem=[]
+        for x,y in pattern[i:i+k]:
             if x == '.' or y == '.':
                 if x == '.':
                     stem.append(y)
@@ -198,21 +195,52 @@ def get_pseknc_vector(sequence, sstructure, psekncdict, k):
                     stem.append(x)
             else:
                 stem.append(x + '-' + y)
-        stem_tuple = tuple(stem)
+        stem_tuple= tuple(stem)
         position = psekncdict.get(stem_tuple)
         vector[0, position] += 1
-        # print stem_tuple
-    return list(vector[0] / sum(vector[0]))
-    # return [round(f,4) for f in list(vector[0]/sum(vector[0]))]
+        #print stem_tuple
+    return list(vector[0]/sum(vector[0]))
+    #return [round(f,4) for f in list(vector[0]/sum(vector[0]))]
+    
+def get_psessc_matrix(filename, k, r, w, pattern_list):
+    '''This is a complete process in PseKNC,aim to gernerate feature vectors.
+     
+       The FASTA format of the input file is as follows:    
+       >sequence name
+       An RNA sequence should be consist of AGCU
+       Second structure
+ 
+    :param input_file_name: f: HANDLE to input. open(<file>)
+    :return: Feature matrix through Triplet
+    '''
+    with open(filename) as f:
+        seqsslst= get_rnasc_data(f)
+    features = []
+    for seqss in seqsslst:
+        vector = get_psessc_vector(seqss.sequence,seqss.sstruc, k, r, w, pattern_list)
+        features.append(vector)
+    return features
+    
+    
+def get_psessc_vector(sequence, sstructure, k, r, w, pattern_list):
+    
+    psekncdict = get_pseknc_dict(pattern_list, k)
+    psekncvec = get_pseknc_vector(sequence,sstructure,psekncdict,k)
+    
+    psesscvec_tmp = psekncvec
+    for i in range(1, r+1):
+        psesscvec_tmp.append(w * calculate_psessc_theta(sequence, sstructure, i))
+    psesscvec = psesscvec_tmp / sum(psesscvec_tmp)
+    return [round(f, 8) for f in psesscvec]
 
 
 def calculate_psessc_theta(sequence, sstructure, j):
     '''r represents λ'''
     if j < len(sequence):
-        correspseq = get_corresp_sequence(sequence, sstructure)
-        pattern = zip(list(sequence), list(correspseq))
-        stem = []
-        for x, y in pattern:
+        correspseq = get_corresp_sequence(sequence,sstructure)
+        pattern = zip(list(sequence),list(correspseq))
+        stem=[]
+        for x,y in pattern:
             if x == '.' or y == '.':
                 if x == '.':
                     stem.append(y)
@@ -223,34 +251,43 @@ def calculate_psessc_theta(sequence, sstructure, j):
         freevalue_vector = []
         for i in stem:
             if i == 'A-U' or i == 'U-A':
-                freevalue_vector.append(-2)
-            elif i == 'C-G' or i == 'G-C':
+               freevalue_vector.append(-2)
+            elif i == 'C-G' or i =='G-C':
                 freevalue_vector.append(-3)
-            elif i == 'U-G' or i == 'G-U':
+            elif i == 'U-G' or i =='G-U':
                 freevalue_vector.append(-1)
             else:
                 freevalue_vector.append(0)
-
-        s = 0.0
-        for i in range(len(freevalue_vector) - j):
-            s += (freevalue_vector[i] - freevalue_vector[i + j]) ** 2
-            print i, i + j
-            # print (freevalue_vector[i] - freevalue_vector[i+r])
-        # print s,len(freevalue_vector)-r
-        return s / (len(freevalue_vector) - j)
+                
+        s=0.0
+        for i in range(len(freevalue_vector)-j):
+            s += (freevalue_vector[i] - freevalue_vector[i+j]) ** 2
+            #print i,i+j
+            #print (freevalue_vector[i] - freevalue_vector[i+r])
+        #print s,len(freevalue_vector)-r
+        return s / (len(freevalue_vector)-j)
     else:
-        error_info = 'j should be less than the length of the sequence.'
+        error_info = 'r should be less than the length of the sequence.'
         sys.stderr.write(error_info)
+        
 
-    # def get_psessc_vector(sequence, sstructure, k, r):
-
-
+    
+    
 def main(args):
-    if args.method == "triplet":
+    #TODO:args.method will be finished
+    #TODO:args.inputfil, name or open(filename)
+    
+    
+    
+    
+    if args.method == 'Triplet':
         res = get_triplet_matrix(args.inputfile)
+    elif args.method == 'PseSSC':
+        pattern_list = ['A', 'C', 'G', 'U', 'A-U', 'U-A', 'G-C', 'C-G', 'G-U', 'U-G']
+        res = get_psessc_matrix(args.inputfile, args.n, args.r, args.w, pattern_list)
     else:
         print("Method error!")
-        
+    
      # Write correspond res file.
     if args.f == 'tab':
         from util import write_tab
@@ -261,50 +298,60 @@ def main(args):
         write_libsvm(res, [args.l] * len(res), args.outputfile)
     elif args.f == 'csv':
         from util import write_csv
-        write_csv(res, args.outputfile)
+        write_csv(res, args.outputfile)  
+        
 
+        
+        
 
 if __name__ == '__main__':
 #==============================================================================
-#     import argparse
-#     from argparse import RawTextHelpFormatter
-# 
-#     parse = argparse.ArgumentParser(description="This is a kmer module for generate kmer vector.",
-#                                     formatter_class=RawTextHelpFormatter)
-#     parse.add_argument('inputfile',
-#                        help="The input file, in valid FASTA format.")
-#     parse.add_argument('outputfile',
-#                        help="The outputfile stored results.")
-#     parse.add_argument('alphabet', choices=['DNA', 'RNA', 'Protein'],
-#                        help="The alphabet of sequences.")
-#     parse.add_argument('method', type=str,
-#                        help="The method name of structure composition.")
-#     #parse.add_argument('k', type=int, choices=range(1, 7),
-#      #                  help="The k value of kmer.")
-#    # parse.add_argument('alphabet', choices=['DNA', 'RNA', 'PROTEIN'],
-#     #                   help="The alphabet of sequences.")
-#     #parse.add_argument('-r', default=0, type=int, choices=[1, 0],
-#      #                  help="Whether need to reverse complement.\n"
-#       #                      "1 means True, 0 means False. (default = 0)")
-#     parse.add_argument('-f', default='tab', choices=['tab', 'svm', 'csv'],
-#                        help="The output format (default = tab).\n"
-#                             "tab -- Simple format, delimited by TAB.\n"
-#                             "svm -- The libSVM training data format.\n"
-#                             "csv -- The format that can be loaded into a spreadsheet program.")
-#     parse.add_argument('-l', default='+1', choices=['+1', '-1'],
-#                        help="The libSVM output file label.")
-# 
-#     args = parse.parse_args()
-# 
-#     print(args)
-#     print("Calculating...")
-#     start_time = time.time()
-#     main(args)
-#     
-#     print("Used time: %ss" % (time.time() - start_time))
-#     print("Done.")
+     import argparse
+     from argparse import RawTextHelpFormatter
+ 
+     parse = argparse.ArgumentParser(description="This is a structure composition module for generate feature vectors.",
+                                     formatter_class=RawTextHelpFormatter)
+     parse.add_argument('inputfile',
+                        help="The input file, in valid FASTA format.")
+     parse.add_argument('outputfile',
+                        help="The outputfile stored results.")
+     parse.add_argument('alphabet', choices=['DNA', 'RNA', 'Protein'],
+                        help="The alphabet of sequences.")
+     parse.add_argument('method', type=str,
+                        help="The method name of structure composition.")
+     parse.add_argument('-n', type=int,
+                        help="The value of k")
+     parse.add_argument('-r', type=int, default=2,
+                        help="The value of lambda. default=2")
+     parse.add_argument('-w', type=float, default=0.1,
+                        help="The value of weight. default=0.1")
+     
+     #parse.add_argument('k', type=int, choices=range(1, 7),
+      #                  help="The k value of kmer.")
+    # parse.add_argument('alphabet', choices=['DNA', 'RNA', 'PROTEIN'],
+     #                   help="The alphabet of sequences.")
+     #parse.add_argument('-r', default=0, type=int, choices=[1, 0],
+      #                  help="Whether need to reverse complement.\n"
+       #                      "1 means True, 0 means False. (default = 0)")
+     parse.add_argument('-f', default='tab', choices=['tab', 'svm', 'csv'],
+                        help="The output format (default = tab).\n"
+                             "tab -- Simple format, delimited by TAB.\n"
+                             "svm -- The libSVM training data format.\n"
+                             "csv -- The format that can be loaded into a spreadsheet program.")
+     parse.add_argument('-l', default='+1', choices=['+1', '-1'],
+                        help="The libSVM output file label.")
+ 
+     args = parse.parse_args()
+ 
+     print(args)
+     print("Calculating...")
+     start_time = time.time()
+     main(args)
+     
+     print("Used time: %ss" % (time.time() - start_time))
+     print("Done.")
 #==============================================================================
-
+    
 #==========================Triplet test========================================
 #    letter = ['(', '.']
 #    alphabet ="AGCU"
@@ -314,33 +361,17 @@ if __name__ == '__main__':
 #    vector =get_triplet_vector(sequence, sstructure, patterndic)
 #    lst=[">hsa-let-7c MI0000064", 'CUUUCUACACAGGUUGGGAUCGGUUGCAAUGCUGUGUUUCUGUAUGGUAUUGCACUUGUCCCGGCCUGUUGAGUUUGG', '..(((...((((((((((((.(((.(((((((((((......)))))))))))))).)))))))))))).))).....']
 #    is_rnasc_list(lst)
-# ==============================================================================
-
-# ==============================================================================
-    list_pattern = ['A', 'C', 'G', 'U', 'A-U', 'U-A', 'G-C', 'C-G', 'G-U', 'U-G']
-    list_rna = ['A', 'C', 'G', 'U']
-    sequence = "GCAUCCGGGUUGAGGUAGUAGGUUGUAUGGUUUAGAGUUACACCCUGGGAGUUAACUGUACAACCUUCUAGCUUUCCUUGGAGC"
-    sstructure = '((.((((((..(((.(((.(((((((((((((..((.(..((...))..).))))))))))))))).))).)))..))))))))'
-    #    sequence_t ='UGGGGUUUCAGGUUCUCAGUCAGAACCUUGGCCCCU'
-    #    sstructure_t = '.((((((..(((((((.....))))))).)))))).'
-
-    k = 2
-    r = 3
-    w = 0
-    pseknclst = []
-    part_psessc = list(combinations_with_replacement(list_pattern, k))
-    #    for i in pseknclst:
-    #        print list(i)
-    #        #i = list(i)
-    #        print i
-    psekncdict = get_pseknc_dict(list_pattern, k)
-    vector_pseknc = get_pseknc_vector(sequence, sstructure, psekncdict, k)
-    # theta = calculate_psessc_theta(sequence, sstructure,3)
-
-
-
-    # get_psessc_vector
-    psessc_vector = vector_pseknc
-    for i in range(1, r + 1):
-        psessc_vector.append(w * calculate_psessc_theta(sequence, sstructure, i))
-    psessc_vector_t = psessc_vector / sum(psessc_vector)
+#==============================================================================
+    
+#==========================PseSSC test==========================================
+#     pattern_list = ['A', 'C', 'G', 'U', 'A-U', 'U-A', 'G-C', 'C-G', 'G-U', 'U-G']
+#     rna_list= ['A', 'C', 'G', 'U']
+#     sequence = "GCAUCCGGGUUGAGGUAGUAGGUUGUAUGGUUUAGAGUUACACCCUGGGAGUUAACUGUACAACCUUCUAGCUUUCCUUGGAGC"
+#     sstructure = '((.((((((..(((.(((.(((((((((((((..((.(..((...))..).))))))))))))))).))).)))..))))))))'
+# 
+#     k = 2
+#     r = 3
+#     w = 0.1
+#     psesscvec = get_psessc_vector(sequence,sstructure,k,r,w,pattern_list)
+#     psesscvec_f = get_psessc_matrix("test.txt", k, r, w, pattern_list)
+#==============================================================================

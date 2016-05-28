@@ -7,13 +7,11 @@ Created on Fri May 20 10:05:20 2016
 
 import sys
 import re
-
 from data import index_list
 from util import is_under_alphabet
 
 class SeqSS:
     """An object that contains RNA sequence and its secondary structure"""
-
     def __init__(self, id, sequence, sstruc, no, mfe):
         self.id = id
         self.sequence = sequence.upper()
@@ -24,8 +22,7 @@ class SeqSS:
 
     def __str__(self):
         """Output seqSS when 'print' method is called."""
-        return "%s\tNo:%s\tlength:%s\tMFE:%.2f\n%s\n%s" % (
-        self.id, str(self.no), str(self.length), self.MFE, self.sequence, self.sstruc)
+        return "%s\tNo:%s\tlength:%s\tMFE:%.2f\n%s\n%s" % (self.id, str(self.no), str(self.length), self.MFE, self.sequence, self.sstruc)
         
         
 def get_rnasc_data(input_data):
@@ -56,7 +53,7 @@ def is_rnasc_list(rnasc_list):
     count = 0    # record line numbers
     no = 0       # record sequence numbers
     alphabet = index_list.RNA
-    id, sequence, sstruc = '', '', ''
+    id,sequence,sstruc = '','',''
     seqss_id = r'>(.+)'
     seqss_sequence = r'([ACUGacug]+)'
     seqss_sstructure = r'([\(\)\.]+)'
@@ -87,7 +84,7 @@ def is_rnasc_list(rnasc_list):
                 mfe = 0                        #MFE is no match.
             if sequence != "" and sstruc != "":
                 if is_rnasc_fasta(SeqSS(id, sequence, sstruc, no, mfe)):
-                    seqss_list.append(SeqSS(id, sequence, sstruc, no, mfe))
+                    seqss_list.append(SeqSS(id,sequence,sstruc,no, mfe))
                     no += 1
                 else:
                     sys.exit()    
@@ -105,7 +102,7 @@ def read_rnasc_fasta(f):
     seqss_list = []
     count = 0    # record line numbers
     no = 0       # record sequence numbers
-    id, sequence, sstruc = '', '', ''
+    id,sequence,sstruc = '','',''
     seqss_id = r'>(.+)'
     seqss_sequence = r'([ACUG]+)'
     seqss_sstructure = r'([\(\)\.]+)'
@@ -127,7 +124,7 @@ def read_rnasc_fasta(f):
             else:
                 mfe = 0  #MFE is no match.
             if is_rnasc_fasta(SeqSS(id, sequence, sstruc, no, mfe)):
-                seqss_list.append(SeqSS(id, sequence, sstruc, no, mfe))
+                seqss_list.append(SeqSS(id,sequence,sstruc,no, mfe))
                 no += 1
             else:
                 sys.exit()
@@ -195,16 +192,15 @@ def get_rnasc_sstructures(f):
     for seqss in seqss_list:
         seqss_sstrucs_list.append(seqss.sstruc)
     return seqss_sstrucs_list
-
-
-def get_corresp_sequence(sequence, sstructure):
+    
+def get_corresp_sequence(sequence,sstructure):
     sstructure_lst = list(sstructure)
-    if len(sequence) == len(sstructure):
+    if len(sequence)==len(sstructure):
         s = []
         for i in range(len(sequence)):
             if sstructure[i] == "(":
                 s.append(i)
-            if sstructure[i] == ")":
+            if sstructure[i] ==")":
                 pos = s.pop()
                 sstructure_lst[pos] = sequence[i]
                 sstructure_lst[i] = sequence[pos]

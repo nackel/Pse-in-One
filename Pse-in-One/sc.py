@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Sat May 13 15:35:42 2016
-@version:0.2.1
+@version:0.2.3
 @author: Nackel
 """
 import sys
@@ -18,9 +18,9 @@ import os
 def get_kmer_lst(letterlst, k):
     """Generate a list of all possible k-mer pattern.
     
-    :param letter: a list that contains all the possible letters in the sequence
-    :param k:the length of k-mer
-    :return: a kmer list
+    :param letter: A list that contains all the possible letters in the sequence.
+    :param k: The length of k-mer.
+    :return: A kmer list.
     """
     kmerlst = []
     letter_set = set(letterlst)
@@ -69,7 +69,7 @@ def get_triplet_matrix(filename):
     '''This is a complete process in triplet,aim to gernerate feature vectors.
      
        The FASTA format of the input file is as follows:    
-       >sequence name
+       >Sequence name
        An RNA sequence should be consist of AGCU
        Second structure
  
@@ -91,7 +91,7 @@ def get_triplet_matrix(filename):
 def get_triplet_vector(sequence, sstructure,patterndict):    
     '''This is a process in triplet,aim to gernerate feature vector.
      
-    :param sequence: an RNA sequence,string.
+    :param sequence: An RNA sequence,string.
     :param sstructure: The corresponding secondary structure, string.
     :param patterndict: All the features, dictionary.
     :return: Feature vector through Triplet.
@@ -130,7 +130,7 @@ def get_triplet_vector(sequence, sstructure,patterndict):
 def get_triplet_dict(letter, k, alphabet=index_list.RNA):
     """Generate a dictionary of all possible triplet pattern.
     :param letter: A list that contains all the possible characters in the secondary structure. eg:['.','(']
-    :param k: The length of k-mer
+    :param k: The length of k-mer.
     :param alphabet: A string that contains all the possible characters in the sequence.
     :return: A triplet dictionary.
     """
@@ -147,7 +147,7 @@ def get_pseknc_matrix(filename,k):
     '''This is a complete process in PseKNC,aim to gernerate feature matrix.
      
        The FASTA format of the input file is as follows:    
-       >sequence name
+       >Sequence name
        An RNA sequence should be consist of AGCU
        Second structure
  
@@ -190,7 +190,7 @@ def get_pseknc_vector(sequence, sstructure, k, letter_list = ['A', 'C', 'G', 'U'
     :param sstructure: The corresponding secondary structure, string.
     :param psekncdict: All the features, dictionary.
     :param k: The length of K-tuple nucleotide composition.
-    :param letter_list: default  ['A', 'C', 'G', 'U']
+    :param letter_list: default   ['A', 'C', 'G', 'U', 'A-U', 'U-A', 'G-C', 'C-G', 'G-U', 'U-G'].
     :return: Feature vector through PseKNC.
     '''
     psekncdict = get_pseknc_dict(letter_list, k)
@@ -249,7 +249,8 @@ def get_psessc_vector(sequence, sstructure, k, r, w, pattern_list = ['A', 'C', '
     :param r: The highest counted rank (or tier) of the structural correlation along a RNA chain.
     :param w: The wight of theta, from 0.1 to 1.
     :param pattern_list: Structure statuses, default:['A', 'C', 'G', 'U', 'A-U', 'U-A', 'G-C', 'C-G', 'G-U', 'U-G'].
-    :return: Feature vector through PseSSC.'''
+    :return: Feature vector through PseSSC.
+    '''
     #psekncdict = get_pseknc_dict(pattern_list, k)
     psekncvec = get_pseknc_vector(sequence,sstructure, k, pattern_list)
     
@@ -308,10 +309,11 @@ def get_psedpc_vector(sequence, sstructure, d, r, w, pattern_list = ['A', 'C', '
     '''This is a complete process in PseSSC, aim to gernerate feature vector.
     :param sequence: An RNA sequence,string.
     :param sstructure: The corresponding secondary structure, string.
-    :param d: Tthe distance between structure statuses.
+    :param d: The distance between structure statuses.
     :param r: The highest counted rank (or tier) of the structural correlation along a RNA chain.
     :param w: The wight of theta, from 0.1 to 1.
-    :param pattern_list: Structure statuses, default:['A', 'C', 'G', 'U', 'A-U', 'U-A', 'G-C', 'C-G', 'G-U', 'U-G'].'''
+    :param pattern_list: Structure statuses, default:['A', 'C', 'G', 'U', 'A-U', 'U-A', 'G-C', 'C-G', 'G-U', 'U-G'].
+    '''
     correspseq = get_corresp_sequence(sequence, sstructure)
     pattern = zip(list(sequence), list(correspseq))
     vector = []
@@ -509,7 +511,7 @@ if __name__ == '__main__':
 #     
 #     psekncdict = get_pseknc_dict(letter_list,3)
 #     psekncvec = get_pseknc_vector(sequence, sstructure,1)
-#==============================================================================
+#=============================PseDPC test======================================
 #    pattern_list = ['A', 'C', 'G', 'U', 'A-U', 'U-A', 'G-C', 'C-G', 'G-U', 'U-G']
 #    sequence = "GCAUCCGGGUUGAGGUAGUAGGUUGUAUGGUUUAGAGUUACACCCUGGGAGUUAACUGUACAACCUUCUAGCUUUCCUUGGAGC"
 #    sstructure = '((.((((((..(((.(((.(((((((((((((..((.(..((...))..).))))))))))))))).))).)))..))))))))'

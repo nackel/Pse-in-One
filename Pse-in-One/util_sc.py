@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Fri May 20 10:05:20 2016
-@version:0.0.2
+@version:0.0.3
 @author: Nackel
 """
 
@@ -12,17 +12,17 @@ from util import is_under_alphabet
 
 class SeqSS:
     """An object that contains RNA sequence and its secondary structure"""
-    def __init__(self, id, sequence, sstruc, no, mfe):
+    def __init__(self, id, sequence, sstructure, no, mfe):
         self.id = id
         self.sequence = sequence.upper()
-        self.sstruc = sstruc            #its secondary structure
+        self.sstructure = sstructure            #its secondary structure
         self.no = no
-        self.length = len(sequence) if len(sequence)==len(sstruc) else -1
+        self.length = len(sequence) if len(sequence)==len(sstructure) else -1
         self.MFE = mfe          #float
 
     def __str__(self):
         """Output seqSS when 'print' method is called."""
-        return "%s\tNo:%s\tlength:%s\tMFE:%.2f\n%s\n%s" % (self.id, str(self.no), str(self.length), self.MFE, self.sequence, self.sstruc)
+        return "%s\tNo:%s\tlength:%s\tMFE:%.2f\n%s\n%s" % (self.id, str(self.no), str(self.length), self.MFE, self.sequence, self.sstructure)
         
         
 def get_rnasc_data(input_data):
@@ -151,7 +151,7 @@ def is_rnasc_fasta(seqss):
         error_info = 'Error, sequence ' + str(seqss.no) + ' is null.'
         sys.stderr.write(error_info)
         return False
-    if len(seqss.sequence) != len(seqss.sstruc):
+    if len(seqss.sequence) != len(seqss.sstructure):
         error_info = 'Error, the length of sequence ' + str(seqss.no) + ' is not equal to the length of its secondary structure.'
         sys.stderr.write(error_info)
         return False
@@ -193,19 +193,19 @@ def get_rnasc_sstructures(f):
         seqss_sstrucs_list.append(seqss.sstruc)
     return seqss_sstrucs_list
     
-def get_corresp_sequence(sequence,sstructure):
-    sstructure_lst = list(sstructure)
-    if len(sequence)==len(sstructure):
+def get_corresp_sequence(seqss):
+    sstructure_lst = list(seqss.sstructure)
+    if len(seqss.sequence)==len(seqss.sstructure):
         s = []
-        for i in range(len(sequence)):
-            if sstructure[i] == "(":
+        for i in range(len(seqss.sequence)):
+            if seqss.sstructure[i] == "(":
                 s.append(i)
-            if sstructure[i] ==")":
+            if seqss.sstructure[i] ==")":
                 pos = s.pop()
-                sstructure_lst[pos] = sequence[i]
-                sstructure_lst[i] = sequence[pos]
+                sstructure_lst[pos] = seqss.sequence[i]
+                sstructure_lst[i] = seqss.sequence[pos]
         sstructure_new = ''.join(sstructure_lst)
         return sstructure_new
     else:
-        error_info = 'The length of sequence is not equal to the length of its secondary structure'
+        error_info = seqss.name+'The length of sequence is not equal to the length of its secondary structure.'
         sys.stderr.write(error_info)

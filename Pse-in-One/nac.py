@@ -1,6 +1,6 @@
 """
 Created on Sat May 13 15:35:42 2016
-@version:0.2.1./pyc
+@version:0.2.1
 @author: Fule Liu, Nackel
 """
 

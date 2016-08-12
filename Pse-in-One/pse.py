@@ -10,7 +10,7 @@ import const
 from util import frequency
 from util import get_data
 from util import check_args, read_k
-from kmer import make_kmer_list
+from nac import make_kmer_list
 from data import index_list
 
 

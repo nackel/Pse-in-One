@@ -1,7 +1,7 @@
 """
 Created on Sat May 13 15:35:42 2016
 @version:0.2.1./pyc
-@author: Fule Liu, Nackel, luo
+@author: Fule Liu, Nackel
 """
 
 import sys
